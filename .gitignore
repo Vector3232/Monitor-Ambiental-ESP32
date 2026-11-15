@@ -8,3 +8,25 @@ credentials.h
 node_modules/
 .vscode/
 .DS_Store
+
+# ATMOS Mobile: configuración local
+mobile/config.local.json
+mobile/config.*.local.json
+
+# Compilaciones, cachés y archivos temporales
+build/
+.dart_tool/
+.gradle/
+*.apk
+*.aab
+*.tmp
+*.temp
+*.bak
+*.log
+tmp/
+temp/
+# Configuración local y firmas privadas
+local.properties
+key.properties
+*.keystore
+*.jks

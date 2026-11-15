@@ -43,3 +43,19 @@ En Monitor Serie deberías ver `HTTP 201` al enviar datos, una vez completados l
 - RLS activo con acceso público de lectura solamente para datos no sensibles.
 - El modo TLS sin verificación es temporal y no debe usarse en despliegues reales.
 - Wi-Fi 2.4 GHz, compatible con ESP32 tradicional.
+
+## 7. ATMOS Mobile (Flutter)
+
+La aplicación móvil está en `mobile/`. Usa el proyecto Supabase existente; **no crees otro proyecto ni vuelvas a ejecutar el esquema para usar Mobile**. Consulta las [instrucciones de ATMOS Mobile](mobile/README.md) para configuración, arquitectura y limitaciones.
+
+```powershell
+cd mobile
+flutter pub get
+Copy-Item config.example.json config.local.json
+# Sustituye el marcador en config.local.json por tu publishable key
+flutter run -d chrome --dart-define-from-file=config.local.json
+```
+
+Incluye inicio, historial con gráficas independientes, alertas dentro de la interfaz y preferencias persistentes. La lectura es pública mediante RLS; no hay autenticación de usuarios ni notificaciones en segundo plano.
+
+Nota: `supabase/schema.sql` es una referencia antigua con `dispositivo` y `creada_en`. La app móvil y las consultas actuales de la web usan `dispositivo_id` y `creado_en`. No se ha modificado el esquema desplegado.
