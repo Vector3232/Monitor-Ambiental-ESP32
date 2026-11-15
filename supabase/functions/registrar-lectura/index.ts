@@ -1,53 +1,71 @@
-// Supabase Edge Function: POST /functions/v1/registrar-lectura
-// Secrets requeridos: DEVICE_TOKEN, SUPABASE_SECRET_KEY
-// SUPABASE_URL está disponible por defecto en Supabase Edge Functions.
+
 import { createClient } from 'npm:@supabase/supabase-js@2.76.1';
 
-const dbUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const dbSecret = Deno.env.get('SUPABASE_SECRET_KEY') ?? '';
+const url = Deno.env.get('SUPABASE_URL') ?? '';
+const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const deviceToken = Deno.env.get('DEVICE_TOKEN') ?? '';
 
-const supabase = createClient(dbUrl || 'https://invalid.supabase.co', dbSecret || 'missing', {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
+function responder(datos: unknown, status = 200) {
+  return new Response(JSON.stringify(datos), {
     status,
-    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+    headers: {
+      'Content-Type': 'application/json'
+    }
   });
 }
 
-Deno.serve(async (req: Request) => {
-  if (req.method !== 'POST') return json({ error: 'Solo POST' }, 405);
-  if (!deviceToken || !dbUrl || !dbSecret) return json({ error: 'Servidor sin configurar' }, 503);
-  if (req.headers.get('x-device-token') !== deviceToken) return json({ error: 'No autorizado' }, 401);
+Deno.serve(async (req) => {
+  if (req.method !== 'POST') {
+    return responder({ error: 'Solo POST' }, 405);
+  }
 
-  let body: Record<string, unknown>;
+  if (!url || !secret || !deviceToken) {
+    return responder({ error: 'Servidor sin configurar' }, 503);
+  }
+
+  if (req.headers.get('x-device-token') !== deviceToken) {
+    return responder({ error: 'No autorizado' }, 401);
+  }
+
+  let datos;
+
   try {
-    const raw = await req.text();
-    if (raw.length > 2048) return json({ error: 'Solicitud demasiado grande' }, 413);
-    body = JSON.parse(raw);
-    if (!body || Array.isArray(body) || typeof body !== 'object') throw Error('Invalid JSON');
-  } catch { return json({ error: 'JSON inválido' }, 400); }
-
-  const temperatura = body.temperatura;
-  const humedad = body.humedad;
-  const dispositivo = body.dispositivo;
-  const simulada = body.simulada;
-  if (typeof temperatura !== 'number' || !Number.isFinite(temperatura) || temperatura < -40 || temperatura > 80 ||
-      typeof humedad !== 'number' || !Number.isFinite(humedad) || humedad < 0 || humedad > 100 ||
-      typeof dispositivo !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(dispositivo) ||
-      typeof simulada !== 'boolean') {
-    return json({ error: 'Campos inválidos: dispositivo, temperatura, humedad, simulada' }, 400);
+    datos = await req.json();
+  } catch {
+    return responder({ error: 'JSON invalido' }, 400);
   }
 
-  const { error } = await supabase.from('lecturas_ambientales').insert({
-    dispositivo, temperatura, humedad, simulada,
-  });
+  const { dispositivo, temperatura, humedad, simulada } = datos ?? {};
+
+  if (
+    typeof dispositivo !== 'string' ||
+    !/^[a-zA-Z0-9_-]{1,64}$/.test(dispositivo) ||
+    typeof temperatura !== 'number' ||
+    !Number.isFinite(temperatura) ||
+    temperatura < -20 || temperatura > 80 ||
+    typeof humedad !== 'number' ||
+    !Number.isFinite(humedad) ||
+    humedad < 0 || humedad > 100 ||
+    typeof simulada !== 'boolean'
+  ) {
+    return responder({ error: 'Datos invalidos' }, 400);
+  }
+
+  const supabase = createClient(url, secret);
+
+  const { error } = await supabase
+    .from('lecturas_ambientales')
+    .insert({
+      dispositivo_id: dispositivo,
+      temperatura,
+      humedad,
+      simulada
+    });
+
   if (error) {
-    console.error('Error al insertar:', error.message);
-    return json({ error: 'No se pudo guardar la lectura' }, 500);
+    console.error(error.message);
+    return responder({ error: 'Error al guardar' }, 500);
   }
-  return json({ ok: true }, 201);
+
+  return responder({ ok: true }, 201);
 });
