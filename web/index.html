@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Monitor Ambiental | ESP32</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div class="brand"><span class="logo">◈</span><div><strong>ATMOS</strong><small>Monitor ambiental IoT</small></div></div>
+      <span id="status" class="status">Modo demostración</span>
+    </header>
+    <section class="intro"><div><div class="eyebrow">PANEL DE CONTROL / ESP32</div><h1>Monitoreo ambiental<span class="dot">.</span></h1><p>Temperatura y humedad de tu dispositivo, almacenadas en la nube.</p></div><button id="configBtn">Configurar Supabase</button></section>
+    <section class="metrics">
+      <article class="metric"><div class="metric-head"><span>Temperatura actual</span><span class="symbol">☀</span></div><div class="value" id="temp">--<small> °C</small></div><div class="metric-foot" id="tempDetail">Sin mediciones</div></article>
+      <article class="metric"><div class="metric-head"><span>Humedad relativa</span><span class="symbol">◉</span></div><div class="value" id="hum">--<small> %</small></div><div class="metric-foot" id="humDetail">Sin mediciones</div></article>
+      <article class="metric"><div class="metric-head"><span>Registros obtenidos</span><span class="symbol">▤</span></div><div class="value" id="count">0</div><div class="metric-foot" id="lastSeen">Sin última lectura</div></article>
+    </section>
+    <section class="card chart-card"><div class="section-head"><div><h2>Historial de mediciones</h2><p>Últimas 50 lecturas disponibles</p></div><div class="legend"><span class="tempKey">Temperatura</span><span class="humKey">Humedad</span></div></div><canvas id="chart" height="240" aria-label="Gráfica de temperatura y humedad"></canvas></section>
+    <section class="card"><div class="section-head"><div><h2>Lecturas recientes</h2><p>Registros ordenados del más reciente al más antiguo</p></div><button id="refreshBtn" class="ghost">Actualizar</button></div><div class="table-scroll"><table><thead><tr><th>Fecha y hora</th><th>Dispositivo</th><th>Temperatura</th><th>Humedad</th><th>Tipo</th></tr></thead><tbody id="readings"></tbody></table></div></section>
+    <footer>Proyecto de sistema embebido en la nube · ESP32 + Supabase</footer>
+  </main>
+  <dialog id="configDialog"><form method="dialog" id="configForm"><h2>Conectar Supabase</h2><p>Escribe la URL y la clave <b>publishable</b> de un proyecto exclusivo para este monitor. Nunca ingreses una secret key o service_role.</p><label>URL de proyecto<input id="projectUrl" type="url" placeholder="https://xxxxx.supabase.co" required></label><label>Clave publishable<input id="publishableKey" type="text" placeholder="sb_publishable_..." required></label><div class="dialog-actions"><button type="button" class="ghost" id="demoBtn">Ver demo</button><button type="button" class="ghost" id="cancelBtn">Cancelar</button><button type="submit" id="saveBtn">Conectar</button></div></form></dialog>
+  <script src="app.js"></script>
+</body>
+</html>

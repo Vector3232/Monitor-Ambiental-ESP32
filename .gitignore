@@ -1,0 +1,10 @@
+
+.env
+.env.*
+!.env.example
+secrets.h
+credentials.h
+*.local
+node_modules/
+.vscode/
+.DS_Store
