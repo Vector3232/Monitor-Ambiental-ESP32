@@ -11,10 +11,10 @@
 #endif
 
 // CONFIGURACIÓN: sustituye estos valores antes de cargar el sketch.
-const char* WIFI_NOMBRE = "TU_WIFI";
-const char* WIFI_CLAVE = "TU_CONTRASENA";
-const char* FUNCION_URL = "https://TU_PROYECTO.supabase.co/functions/v1/registrar-lectura";
-const char* DEVICE_TOKEN = "TU_TOKEN_PRIVADO_DE_DISPOSITIVO";
+const char* WIFI_NOMBRE = "";
+const char* WIFI_CLAVE = "";
+const char* FUNCION_URL = "https://flxtndpcvwxmpludoehb.supabase.co/functions/v1/registrar-lectura";
+const char* DEVICE_TOKEN = "";
 const char* DISPOSITIVO = "esp32-01";
 
 // Solo para la PRUEBA INICIAL: HTTPS sin validación de certificado.
@@ -24,17 +24,64 @@ const bool MODO_PRUEBA_TLS = true;
 unsigned long ultimaLectura = 0;
 const unsigned long INTERVALO_MS = 15000;
 
-void conectarWifi() {
-  if (WiFi.status() == WL_CONNECTED) return;
-  Serial.print("Conectando a Wi-Fi");
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_NOMBRE, WIFI_CLAVE);
+
+const char* REDES_ABIERTAS_PERMITIDAS[] = {
+  "WiFi_Laboratorio",
+  "WiFi_Invitados"
+};
+
+bool esperarConexion(unsigned long tiempoMs) {
   unsigned long inicio = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - inicio < 20000) {
+
+  while (WiFi.status() != WL_CONNECTED &&
+         millis() - inicio < tiempoMs) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println(WiFi.status() == WL_CONNECTED ? " conectado" : " sin conexion");
+
+  Serial.println();
+  return WiFi.status() == WL_CONNECTED;
+}
+
+void conectarWifi() {
+  if (WiFi.status() == WL_CONNECTED) {
+    return;
+  }
+
+  WiFi.mode(WIFI_STA);
+
+  // Cancelar cualquier intento anterior
+  WiFi.disconnect(false, false);
+  delay(500);
+
+  Serial.println("Conectando a Wi-Fi...");
+  Serial.println(WIFI_NOMBRE);
+
+  WiFi.begin(WIFI_NOMBRE, WIFI_CLAVE);
+
+  // Esperar hasta 20 segundos
+  unsigned long inicio = millis();
+
+  while (WiFi.status() != WL_CONNECTED &&
+         millis() - inicio < 20000) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("CONEXION WIFI EXITOSA");
+    Serial.print("Direccion IP: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("Senal: ");
+    Serial.println(WiFi.RSSI());
+  } else {
+    Serial.println("ERROR: No se pudo conectar al Wi-Fi");
+
+    // Cerrar correctamente el intento fallido
+    WiFi.disconnect(false, false);
+  }
 }
 
 void enviarLectura(float temperatura, float humedad, bool simulada) {
